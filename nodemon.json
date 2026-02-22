@@ -1,0 +1,9 @@
+{
+    "ignore": [
+        "uploads/*",
+        "combined.log",
+        "error.log",
+        "node_modules/*"
+    ],
+    "delay": "2500"
+}
