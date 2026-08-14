@@ -3,8 +3,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
-import mongoSanitize from 'express-mongo-sanitize';
-import xss from 'xss-clean';
 import config from './config/index.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import logger from './utils/logger.js';
@@ -26,11 +24,6 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Data Sanitization against NoSQL query injection
-app.use(mongoSanitize());
-
-// Data Sanitization against XSS
-app.use(xss());
 
 // CORS
 app.use(cors({
