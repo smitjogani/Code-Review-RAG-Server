@@ -2,6 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
+import mongoSanitize from 'express-mongo-sanitize';
+import xss from 'xss-clean';
 import config from './config/index.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import logger from './utils/logger.js';
@@ -15,10 +18,26 @@ const app = express();
 app.use(helmet());
 app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
 
+// Global Rate Limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again after 15 minutes'
+});
+app.use(limiter);
+
+// Data Sanitization against NoSQL query injection
+app.use(mongoSanitize());
+
+// Data Sanitization against XSS
+app.use(xss());
+
 // CORS
 app.use(cors({
-    origin: config.corsOrigin,
-    credentials: true
+    origin: config.corsOrigin === '*' ? 'http://localhost:5173' : config.corsOrigin, // Stricter default if '*'
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Body Parsing
