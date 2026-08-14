@@ -28,7 +28,17 @@ const parseLimit = (limit) => {
     return parseInt(limit);
 };
 
+const fileFilter = (req, file, cb) => {
+    // Only accept zip files
+    if (file.mimetype === 'application/zip' || file.mimetype === 'application/x-zip-compressed') {
+        cb(null, true);
+    } else {
+        cb(new Error('Only ZIP files are allowed'), false);
+    }
+};
+
 export const upload = multer({
     storage: storage,
-    limits: { fileSize: parseLimit(config.uploadLimit) }
+    limits: { fileSize: parseLimit(config.uploadLimit) },
+    fileFilter: fileFilter
 });
