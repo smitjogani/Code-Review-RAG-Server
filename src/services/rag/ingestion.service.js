@@ -4,7 +4,7 @@ import AdmZip from 'adm-zip';
 import simpleGit from 'simple-git';
 import { glob } from 'glob';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
-import { GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
+import { PineconeEmbeddings } from '@langchain/pinecone';
 import { PineconeStore } from '@langchain/pinecone';
 import { Pinecone } from '@pinecone-database/pinecone';
 import logger from '../../utils/logger.js';
@@ -15,12 +15,19 @@ class IngestionService {
     constructor() {
         this.baseDir = path.join(process.cwd(), 'uploads');
         fs.ensureDirSync(this.baseDir);
+        this._pinecone = null;
+        this._pineconeIndex = null;
+    }
 
-        // Initialize Pinecone
-        this.pinecone = new Pinecone({
-            apiKey: config.pineconeApiKey
-        });
-        this.pineconeIndex = this.pinecone.Index(config.pineconeIndex);
+    getPineconeIndex() {
+        if (!this._pineconeIndex) {
+            if (!config.pineconeApiKey) {
+                throw new Error("Please set PINECONE_API_KEY for ingestion");
+            }
+            this._pinecone = new Pinecone({ apiKey: config.pineconeApiKey });
+            this._pineconeIndex = this._pinecone.Index(config.pineconeIndex);
+        }
+        return this._pineconeIndex;
     }
 
     async processProject(project) {
@@ -80,9 +87,9 @@ class IngestionService {
 
             // 4. Embed & Store in Pinecone
             logger.info(`Embedding pipeline started: ${validChunks.length} chunks`);
-            const embeddings = new GoogleGenerativeAIEmbeddings({
-                model: "gemini-embedding-001",
-                apiKey: config.googleApiKey
+            const embeddings = new PineconeEmbeddings({
+                pineconeApiKey: config.pineconeApiKey,
+                model: "llama-text-embed-v2"
             });
 
             const batchSize = 100;
@@ -135,7 +142,7 @@ class IngestionService {
             const vectorStore = await PineconeStore.fromExistingIndex(
                 embeddings,
                 {
-                    pineconeIndex: this.pineconeIndex,
+                    pineconeIndex: this.getPineconeIndex(),
                     namespace: project._id.toString()
                 }
             );

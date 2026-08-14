@@ -2,6 +2,7 @@ import { BaseController } from './base.controller.js';
 import { ProjectService } from '../services/project.service.js';
 import { ingestionService } from '../services/rag/ingestion.service.js';
 import { chatService } from '../services/rag/chat.service.js';
+import { getDemoChatResponse } from '../data/demoResponses.js';
 import { validateProject } from '../validators/project.validator.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -58,6 +59,13 @@ class ProjectController extends BaseController {
         const project = await this.service.getItemById(id);
         if (!project) {
             throw new ApiError(404, "Project not found");
+        }
+
+        if (project.metadata?.demo) {
+            const result = getDemoChatResponse(question);
+            return res.status(200).json(
+                new ApiResponse(200, result, "Demo answer generated successfully")
+            );
         }
 
         // Get answer from RAG pipeline

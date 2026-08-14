@@ -6,12 +6,22 @@ import config from '../../config/index.js';
 
 class AnalysisService {
     constructor() {
-        this.model = new ChatGoogleGenerativeAI({
-            model: config.geminiModel,
-            maxOutputTokens: 8192,
-            apiKey: config.googleApiKey,
-            temperature: 0.2, // Low temp for more deterministic code analysis
-        });
+        this._model = null;
+    }
+
+    getModel() {
+        if (!this._model) {
+            if (!config.googleApiKey) {
+                throw new Error("Please set GOOGLE_API_KEY or GEMINI_API_KEY for analysis");
+            }
+            this._model = new ChatGoogleGenerativeAI({
+                model: config.geminiModel,
+                maxOutputTokens: 8192,
+                apiKey: config.googleApiKey,
+                temperature: 0.2,
+            });
+        }
+        return this._model;
     }
 
     /**
@@ -83,7 +93,7 @@ Keep the tone objective, expert, and authoritative yet constructive. Focus on pr
 ALWAYS end your entire report with EXACTLY the following marker: "--- SUGGESTED_QUESTIONS ---", followed by exactly 3 suggested follow-up questions the user can ask about this codebase, each on a new line starting with "- ".
             `);
 
-            const chain = prompt.pipe(this.model).pipe(new StringOutputParser());
+            const chain = prompt.pipe(this.getModel()).pipe(new StringOutputParser());
 
             const report = await chain.invoke({
                 language: projectContext.language,

@@ -1,8 +1,8 @@
 
-import { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { StringOutputParser } from '@langchain/core/output_parsers';
-import { PineconeStore } from '@langchain/pinecone';
+import { PineconeStore, PineconeEmbeddings } from '@langchain/pinecone';
 import { Pinecone } from '@pinecone-database/pinecone';
 import logger from '../../utils/logger.js';
 import config from '../../config/index.js';
@@ -10,28 +10,55 @@ import { ApiError } from '../../utils/ApiError.js';
 
 class ChatService {
     constructor() {
-        this.llm = new ChatGoogleGenerativeAI({
-            model: config.geminiModel,
-            apiKey: config.googleApiKey,
-            temperature: 0.1,
-        });
+        this._llm = null;
+        this._embeddings = null;
+        this._pinecone = null;
+        this._pineconeIndex = null;
+    }
 
-        this.embeddings = new GoogleGenerativeAIEmbeddings({
-            model: "gemini-embedding-001",
-            apiKey: config.googleApiKey
-        });
+    getLlm() {
+        if (!this._llm) {
+            if (!config.googleApiKey) {
+                throw new Error("Please set GOOGLE_API_KEY or GEMINI_API_KEY for chat");
+            }
+            this._llm = new ChatGoogleGenerativeAI({
+                model: config.geminiModel,
+                apiKey: config.googleApiKey,
+                temperature: 0.1,
+            });
+        }
+        return this._llm;
+    }
 
-        this.pinecone = new Pinecone({
-            apiKey: config.pineconeApiKey
-        });
-        this.pineconeIndex = this.pinecone.Index(config.pineconeIndex);
+    getEmbeddings() {
+        if (!this._embeddings) {
+            if (!config.pineconeApiKey) {
+                throw new Error("Please set PINECONE_API_KEY for embeddings");
+            }
+            this._embeddings = new PineconeEmbeddings({
+                pineconeApiKey: config.pineconeApiKey,
+                model: "llama-text-embed-v2"
+            });
+        }
+        return this._embeddings;
+    }
+
+    getPineconeIndex() {
+        if (!this._pineconeIndex) {
+            if (!config.pineconeApiKey) {
+                throw new Error("Please set PINECONE_API_KEY for vector search");
+            }
+            this._pinecone = new Pinecone({ apiKey: config.pineconeApiKey });
+            this._pineconeIndex = this._pinecone.Index(config.pineconeIndex);
+        }
+        return this._pineconeIndex;
     }
 
     async getAnswer(projectId, question) {
         // 1. Get Vector Store (From Pinecone)
         const vectorStore = await PineconeStore.fromExistingIndex(
-            this.embeddings,
-            { pineconeIndex: this.pineconeIndex, namespace: projectId.toString() }
+            this.getEmbeddings(),
+            { pineconeIndex: this.getPineconeIndex(), namespace: projectId.toString() }
         );
 
         if (!vectorStore) {
@@ -75,7 +102,7 @@ Answer:
         `);
 
         // 4. Generate Response
-        const chain = promptTemplate.pipe(this.llm).pipe(new StringOutputParser());
+        const chain = promptTemplate.pipe(this.getLlm()).pipe(new StringOutputParser());
         const rawResponse = await chain.invoke({
             context: context,
             question: question
