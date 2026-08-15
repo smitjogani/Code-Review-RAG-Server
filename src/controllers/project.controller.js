@@ -7,6 +7,7 @@ import { validateProject } from '../validators/project.validator.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
+import logger from '../utils/logger.js';
 
 class ProjectController extends BaseController {
     constructor() {
@@ -38,8 +39,11 @@ class ProjectController extends BaseController {
                 analysisReport: result.report
             });
         }).catch((err) => {
-            console.error("Ingestion Failed:", err);
-            this.service.updateItem(project._id, { status: "failed" });
+            logger.error("Ingestion Failed:", err);
+            this.service.updateItem(project._id, { 
+                status: "failed",
+                errorMessage: err.message || "Unknown error occurred during ingestion."
+            });
         });
 
         res.status(201).json(

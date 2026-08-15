@@ -1,25 +1,27 @@
 # Oriva: Code-Review-RAG (Server)
 
-Oriva is an advanced AI-powered codebase analysis and chat assistant. This repository contains the Backend Server, acting as the core Retrieval-Augmented Generation (RAG) engine that powers the Oriva client. 
+## 🚀 The Problem It Solves
+Modern codebases are massive and complex. When developers join a new project or attempt to debug a systemic issue, they spend hours reading through disconnected files, tracing dependencies, and trying to understand architectural patterns. Traditional AI tools lack full context—they only understand the specific snippets you paste into them.
 
-## Key Features
+**Oriva** solves this by acting as a highly intelligent, context-aware Principal Engineer. By ingesting your entire codebase (either via ZIP upload or public/private GitHub repositories) and storing it in a vector database, Oriva allows you to chat directly with your entire codebase. It instantly understands the structure, dependencies, and logic of your code, enabling you to identify architectural flaws, generate specialized IDE prompts to fix bugs, and onboard onto new projects in minutes.
 
-- **RAG Engine**: Utilizes **Pinecone** as a Vector Database and **Google Generative AI (Gemini 1.5 Pro/Flash)** for embedding generation and intelligent chat responses.
-- **Codebase Ingestion**: Capable of ingesting codebases via direct `.zip` file uploads (using `multer` and `adm-zip`) or via public GitHub repository URLs (using `axios` and `jszip`).
-- **End-to-End Payload Encryption**: Employs custom Express middlewares to automatically decrypt incoming API requests and encrypt outgoing responses using AES-256 symmetric encryption, ensuring zero data leakage in transit.
-- **Secure Authentication**: Robust JWT-based authentication system storing tokens securely in HTTP-only, secure cookies.
-- **Rate Limiting**: Protects AI API endpoints (like repository analysis) from abuse using `express-rate-limit`.
-- **Global Error Handling**: Custom error formatting that strips sensitive stack traces in production environments.
+## ✨ Key Features
+- **Intelligent RAG Engine**: Combines Google's Gemini LLM with Pinecone Vector DB to answer questions with deep context spanning your entire codebase.
+- **GitHub PAT Support**: Securely ingest both public and private GitHub repositories using Personal Access Tokens.
+- **"Get Prompt for Fix" AI Generator**: When the AI finds an issue, one click generates a token-optimized, persona-driven prompt tailored for specific IDEs (Cursor, VS Code Copilot, Claude, Antigravity).
+- **End-to-End Payload Encryption**: Zero data leakage. All sensitive requests and API responses are encrypted using AES-256 (`CryptoJS`) before traversing the network.
+- **Instant Demo Mode**: "Skip Login" capability for users who want to bypass backend authentication and test the UI/UX instantly.
+- **Smart Error Handling**: Clear, user-friendly UI errors directly piped from the backend to the frontend (e.g., catching missing GitHub PAT permissions).
+- **Rich Markdown UI**: Beautiful glassmorphism UI with Tailwind CSS, rendering syntax-highlighted code blocks, tables, and AI reference sources gracefully.
 
-## Tech Stack
-
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB (via Mongoose)
-- **Vector Database**: Pinecone
-- **AI / LLM**: Google Generative AI SDK (`@google/generative-ai`)
-- **Cryptography**: CryptoJS (AES-256), bcryptjs, jsonwebtoken
-- **File Processing**: multer, adm-zip, jszip
+## 🛠 Tech Stack
+- **Frontend**: React.js (Vite), Tailwind CSS, Lucide React, React-Markdown.
+- **Backend**: Node.js, Express.js.
+- **Database**: MongoDB (via Mongoose) for user/project metadata.
+- **Vector Database (RAG)**: Pinecone.
+- **AI / LLM**: Google Generative AI (Gemini 1.5 Pro/Flash).
+- **Security**: CryptoJS (AES-256 Symmetric Encryption), JWT Authentication, bcryptjs.
+- **File Processing**: `multer`, `adm-zip`, `simple-git`.
 
 ## Getting Started
 

@@ -202,7 +202,16 @@ class IngestionService {
 
         // Disable terminal prompts so git doesn't hang/crash asking for a password in the background
         const git = simpleGit().env('GIT_TERMINAL_PROMPT', '0');
-        await git.clone(finalUrl, clonePath);
+        
+        try {
+            await git.clone(finalUrl, clonePath);
+        } catch (err) {
+            const errStr = err.message || String(err);
+            if (errStr.includes('could not read Username') || errStr.includes('Authentication failed') || errStr.includes('not found')) {
+                throw new Error("Repository not found or access denied. If this is a private repository, please provide a valid Personal Access Token (PAT).");
+            }
+            throw err;
+        }
 
         return clonePath;
     }
