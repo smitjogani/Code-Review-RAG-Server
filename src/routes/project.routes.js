@@ -9,7 +9,7 @@ const controller = new ProjectController();
 
 const createLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // limit each IP to 10 project creations per windowMs
+    max: process.env.NODE_ENV === 'development' ? 1000 : 50, // higher limit
     message: 'Too many projects created from this IP, please try again after 15 minutes'
 });
 
