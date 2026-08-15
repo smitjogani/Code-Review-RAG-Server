@@ -10,7 +10,7 @@
     "seed": "node scripts/seed-demo.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Smit Jogani",
   "license": "ISC",
   "type": "module",
   "dependencies": {
