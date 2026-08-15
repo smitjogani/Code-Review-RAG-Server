@@ -4,6 +4,7 @@ const projectSchema = new mongoose.Schema({
     name: { type: String, required: true },
     type: { type: String, enum: ['zip', 'github'], required: true },
     repoUrl: { type: String }, // For GitHub
+    githubToken: { type: String }, // For private GitHub repos
     filePath: { type: String }, // For ZIP
     status: {
         type: String,

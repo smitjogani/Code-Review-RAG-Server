@@ -39,7 +39,7 @@ class IngestionService {
             if (project.type === 'zip' && project.filePath) {
                 sourcePath = await this.extractZip(project.filePath);
             } else if (project.type === 'github' && project.repoUrl) {
-                sourcePath = await this.cloneRepo(project.repoUrl);
+                sourcePath = await this.cloneRepo(project.repoUrl, project.githubToken);
             } else {
                 throw new Error("Invalid project source configuration");
             }
@@ -185,11 +185,24 @@ class IngestionService {
         return extractPath;
     }
 
-    async cloneRepo(repoUrl) {
+    async cloneRepo(repoUrl, token) {
         const clonePath = path.join(this.baseDir, `repo-${Date.now()}`);
         fs.ensureDirSync(clonePath);
 
-        await simpleGit().clone(repoUrl, clonePath);
+        let finalUrl = repoUrl;
+        if (token) {
+            try {
+                const urlObj = new URL(repoUrl);
+                urlObj.username = token;
+                finalUrl = urlObj.toString();
+            } catch (err) {
+                logger.warn("Invalid repo URL format for token injection");
+            }
+        }
+
+        // Disable terminal prompts so git doesn't hang/crash asking for a password in the background
+        const git = simpleGit().env('GIT_TERMINAL_PROMPT', '0');
+        await git.clone(finalUrl, clonePath);
 
         return clonePath;
     }
